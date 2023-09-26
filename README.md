@@ -18,7 +18,7 @@ The 1-minute video (shown above) used as a stimulus has a predetermined pattern 
 
 ### Audio QA Test
 
-![alt text](./Pagan_Pitch_task2.png)
+![alt text](./pagan_pitch_task2.png)
 
 Based on the premise of the visual QA test, and due to the nature of audiovisual stimuli used in our game annotation task (see paper), we present the annotator with an auditory QA test. This test is also set up as a standalone PAGAN session, which once completed redirects the user to the final annotation task.
 
