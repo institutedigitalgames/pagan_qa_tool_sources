@@ -3,6 +3,7 @@
 ![alt text](./Extra/Banner.png)
 
 Paper Link: https://arxiv.org/abs/2308.16029
+Dataset Link (organized into sessions): https://drive.google.com/file/d/1nKzAZATJFhXr1OXmhmRRrmg0P2WQYbRL/view?usp=sharing
 
 Below we outline the two Quality Assurance (QA) tools we introduce for testing the reliability of annotators: one visual QA test and one auditory QA test. The QA tests are founded on the premise that the audio or visual content used as stimuli are (a) simple to annotate in terms of their labels, and (b) fully controlled by the researchers to provide an objective ground truth. The stimuli in both QA tests listed below are in video format, and are created within
 the Processing environment (https://processing.org/). The videos, ground truth signal, and instructions on integrating these with PAGAN are included in this repository.
