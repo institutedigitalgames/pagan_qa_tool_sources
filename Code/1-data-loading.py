@@ -71,7 +71,4 @@ if __name__ == "__main__":
     engagement_df.to_csv("Raw_Engagement_Logs.csv")
     green_brightness_df.to_csv("Raw_Visual_Logs.csv")
     sound_pitch_df.to_csv("Raw_Audio_Logs.csv")
-
-    print(list(engagement_df['PaganSession'].unique()))
-
     

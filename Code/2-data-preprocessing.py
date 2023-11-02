@@ -9,7 +9,7 @@ MIN_CHANGES = 3 # Minimum amount of changes for annotation to be considered vali
 
 idg_annotators_session1 = ["BD7CE04E-99E3-7FA4-A15B-5625CD981638", "F868E6ED-CA85-FD16-942C-BE70BB997450", "1D8DFC94-778B-0969-9390-9F8A5B9C33EE", "89DA2498-EB31-04AF-2921-AEA70D626881", "49CAE400-6726-5DE5-398E-179FAD35B00A"]
 idg_annotators_session2 = ['2EEEFB7F-9312-F08D-97CA-28A3B631D29E', "3865D7ED-91D3-6EF6-DB13-DD7C46D9034E", "BA3206C6-52F9-5900-5A81-2188D3E88B59", "ED4B536F-21B5-262C-61BC-A4396AFC016B", "62FF5C7F-4E6B-BB00-3FE0-F8752641A074"]
-idg_annotators_session3 = ['5B89C3FA-A4AB-D90C-3FEF-885016FFB732', '738D09B9-A39F-819B-A237-C09448A2EB62', '9B3BB3E4-2AEB-482E-7316-F9715621C362']
+idg_annotators_session3 = ['5B89C3FA-A4AB-D90C-3FEF-885016FFB732', '738D09B9-A39F-819B-A237-C09448A2EB62', '9B3BB3E4-2AEB-482E-7316-F9715621C362', '012AF2FC-E0BD-5B98-9EE1-824A13E98977', "C9411126-3C17-BFE4-BC31-15F658CFF425"]
 bad_annotators = [] # Catch any bad annotators (missing annotation) and remove them from the dataset.
 
 MA_SMOOTH = False
@@ -36,7 +36,10 @@ def get_max_times(participants):
     for _, participant_df in participants:
         games = participant_df.groupby('DatabaseName')
         for _, game_df in games:
-            clean_game_name = game_df['OriginalName'].values[0].split("_")[1].split(".")[0]
+            try:
+                clean_game_name = game_df['OriginalName'].values[0].split("_")[1].split(".")[0]
+            except:
+                print(game_df['OriginalName'].values[0])
             if clean_game_name not in game_max_times or game_df["VideoTime"].max() > game_max_times[clean_game_name]:
                 game_max_times[clean_game_name] = game_df["VideoTime"].max()
     return game_max_times
@@ -69,7 +72,7 @@ def separate_by_session_and_participant_engagement(df, engagement=False):
                 game_counter = 0
                 
                 for _, game_df in games:
-                    clean_game_name = game_df['OriginalName'].values[0].split("_")[1].split(".")[0]                
+                    clean_game_name = game_df['OriginalName'].values[0].split("_")[1].split(".")[0]           
                     data_dict[session_name][group][participant_id][clean_game_name] = {
                         "VideoTime": game_df["VideoTime"].values,
                         "Value": game_df["Value"].values,
@@ -110,7 +113,7 @@ def interpolate_data(data_dict, tw_size):
                     else:
                         interpolated_dict[session_id][group_name][participant_id][game_name] = pagan_fulltrace(df, tw_size)
 
-            print(np.mean(lengths))
+            # print(np.mean(lengths))
     print(f"Number of traces interpolated: {counter}")
     print(f"Number of invalid traces: {invalid}")
     return interpolated_dict
@@ -181,8 +184,56 @@ def remove_bad_sessions(visual_data, audio_data, engagement_data):
     for ids in remove["Visual"]:
         del visual_data[ids[0]][ids[1]][ids[2]]
     for ids in remove["Engagement"]:  
-        del engagement_data[ids[0]][ids[1]][ids[2]]
+        # del engagement_data[ids[0]][ids[1]][ids[2]]
+        pass
     return visual_data, audio_data, engagement_data
+
+def format_time_difference(seconds):
+    minutes, seconds = divmod(seconds, 60)
+    try:
+        return f"{int(minutes)} minutes and {int(seconds)} seconds"
+    except:
+        print("Error")
+        return 
+
+def compare_first_timestamp_per_participant(audio_df, visual_df, engagement_df):
+    audio_participants = audio_df['Participant'].unique()
+    visual_participants = visual_df['Participant'].unique()
+    engagement_participants = engagement_df['Participant'].unique()
+
+    participant_timestamps = {}
+
+    for participant in audio_participants:
+        audio_participant_df = audio_df[audio_df['Participant'] == participant]
+        visual_participant_df = visual_df[visual_df['Participant'] == participant]
+        engagement_participant_df = engagement_df[engagement_df['Participant'] == participant]
+
+        session = audio_participant_df['PaganSession'].values[0]
+
+        if session.split("-")[-1] != '1' and session.split("-")[-1] != '3' and session.split("-")[-1] != '7':
+            continue
+
+        try:
+            audio_first_timestamp = int(audio_participant_df['Timestamp'].values[0])
+            visual_first_timestamp = int(visual_participant_df['Timestamp'].values[0])
+            engagement_first_timestamp =int(engagement_participant_df['Timestamp'].values[0])
+        except:
+            continue
+        
+        audio_diff = np.abs(audio_first_timestamp - visual_first_timestamp)
+
+        if audio_diff == 0:
+            print (audio_participant_df['Timestamp'].values[0], audio_participant_df['Timestamp'].values[-1])
+        visual_diff = np.abs(visual_first_timestamp - engagement_first_timestamp)
+ 
+        participant_timestamps[f"{participant}-{session}"] = {
+            "Audio Timestamp": audio_first_timestamp,
+            "Visual Timestamp": visual_first_timestamp,
+            "Audio_Visual_Difference": format_time_difference(audio_diff / 1000),
+            "Visual_Engagement_Difference": format_time_difference(visual_diff / 1000),
+        }
+
+    return participant_timestamps
 
 
 if __name__ == "__main__":
@@ -191,6 +242,16 @@ if __name__ == "__main__":
     green_brightness_df = pd.read_csv("./Raw_Visual_Logs.csv")
     sound_pitch_df = pd.read_csv("./Raw_Audio_Logs.csv")
 
+    participant_timestamps = compare_first_timestamp_per_participant(
+        sound_pitch_df, green_brightness_df, engagement_df
+    )
+
+    for participant, timestamps in participant_timestamps.items():
+        print(f"Participant: {participant}")
+        print("First Timestamps and Differences:")
+        print(timestamps)
+        print()
+        
     engagement_data_dict = separate_by_session_and_participant_engagement(engagement_df, True)
     sound_pitch_data_dict = separate_by_session_and_participant_engagement(sound_pitch_df)
     green_brightness_data_dict = separate_by_session_and_participant_engagement(green_brightness_df)

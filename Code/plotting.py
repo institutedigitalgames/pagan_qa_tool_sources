@@ -224,7 +224,7 @@ def plot_individual_matrix(IM, title):
     # fig.patch.set_alpha(0)
     plt.title(title)
     cmap = ListedColormap(['white', 'white', 'white', 'white'])
-    value_map = {"↓": 0, "=": 1, "↑": 2, "": 3}
+    value_map = {"↓": 0, "=": 1, "↑": 2, "": 3, "x": 4}
     numeric_IM = np.vectorize(value_map.get)(IM)
     plt.imshow(numeric_IM, cmap=cmap)
     for i in range(numeric_IM.shape[0]):

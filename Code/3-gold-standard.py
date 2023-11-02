@@ -126,7 +126,7 @@ def calculate_agreement_matrices(individual_matrices):
                                 direction_counts[individual_matrix[i, j]] += 1
                             max_count_direction = max(direction_counts.items(), key=lambda x: x[1])
 
-                            if max_count_direction[1] == num_participants / 2: # If half the participants agree on the direction change.
+                            if max_count_direction[1] >= num_participants / 2: # If half the participants agree on the direction change.
                                 agreement_matrix[i, j] = max_count_direction[0]
                 agreement_matrices[session_id][group_id][game_name] = np.asarray(agreement_matrix)
             # plot_individual_matrix(agreement_matrix, f"{session_id}-{game_name}")
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     
     engagement_data = np.load("./Engagement_Task.npy", allow_pickle=True).item()    
 
-    sessions_to_use = ['Session-1', 'Session-2']
+    sessions_to_use = ['Session-1', 'Session-2', 'Session-3', 'Session-7']
     groups_to_use = ['Expert']
 
     for session_id in list(engagement_data.keys()):
@@ -147,9 +147,9 @@ if __name__ == "__main__":
             if group_id not in groups_to_use:
                 del engagement_data[session_id][group_id]
     
-    median_signals_dict = calculate_median_signal_excluding(engagement_data)
-    # plot_engagement_data(median_signals_dict, None)
-    np.save("./Engagement_Median.npy", median_signals_dict)
+    # median_signals_dict = calculate_median_signal_excluding(engagement_data)
+    # plot_engagement_data(engagement_data, None)
+    # np.save("./Engagement_Median.npy", median_signals_dict)"
 
     individual_matrices = create_individual_matrices(engagement_data)
     agreement_matrices = calculate_agreement_matrices(individual_matrices)
@@ -165,13 +165,17 @@ if __name__ == "__main__":
     for session_id, session_data in agreement_matrices.items():
         for group_id, group_data in session_data.items():
             for game_name, agreement_matrix in group_data.items():
-
-                # Get the elements within 5 data points of the diagonal
-                for offset in range(1, 1 + 5):
-                    if offset >= 0 and offset < agreement_matrix.shape[0]:
-                        diag_elements = agreement_matrix[np.arange(agreement_matrix.shape[0]-offset), np.arange(offset, agreement_matrix.shape[1])]
-                    # Count the occurrences of each category
-                    counts.update(Counter(diag_elements))
+                diagonal_list = []
+                diagonal_matrix = np.full(agreement_matrix.shape, "")
+                for i in range(agreement_matrix.shape[0]):
+                    for offset in range(1,5):
+                        try:
+                            diagonal_list.append(agreement_matrix[i][i+offset])
+                            diagonal_matrix[i][i+offset] = diagonal_list[-1]
+                        except IndexError:
+                            pass
+                counts.update(Counter(diagonal_list))
+                # plot_individual_matrix(diagonal_matrix, "") # @Kosmas: I double checked this and it works well now.
 
     # Create a bar plot of the counts
     plt.bar(counts.keys(), counts.values())
