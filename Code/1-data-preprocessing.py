@@ -96,7 +96,7 @@ def interpolate_data(data_dict, tw_size):
         interpolated_dict[session_id] = {"Expert": {}, "Mturk": {}}
         for group_name, group_data in session_data.items():
             
-            print(f'{session_id}-{group_name}')
+            # print(f'{session_id}-{group_name}')
             lengths = []
 
             for participant_id, participant_data in group_data.items():
@@ -204,61 +204,12 @@ def format_time_difference(seconds):
         print("Error")
         return 
 
-def compare_first_timestamp_per_participant(audio_df, visual_df, engagement_df):
-    audio_participants = audio_df['Participant'].unique()
-    visual_participants = visual_df['Participant'].unique()
-    engagement_participants = engagement_df['Participant'].unique()
-
-    participant_timestamps = {}
-
-    for participant in audio_participants:
-        audio_participant_df = audio_df[audio_df['Participant'] == participant]
-        visual_participant_df = visual_df[visual_df['Participant'] == participant]
-        engagement_participant_df = engagement_df[engagement_df['Participant'] == participant]
-
-        session = audio_participant_df['PaganSession'].values[0]
-
-        if session.split("-")[-1] != '1' and session.split("-")[-1] != '3' and session.split("-")[-1] != '7':
-            continue
-        try:
-            audio_first_timestamp = int(audio_participant_df['Timestamp'].values[0])
-            visual_first_timestamp = int(visual_participant_df['Timestamp'].values[0])
-            engagement_first_timestamp = int(engagement_participant_df['Timestamp'].values[0])
-        except:
-            continue
-        
-        audio_diff = np.abs(audio_first_timestamp - visual_first_timestamp)
-
-        if audio_diff == 0:
-            print (audio_participant_df['Timestamp'].values[0], audio_participant_df['Timestamp'].values[-1])
-        visual_diff = np.abs(visual_first_timestamp - engagement_first_timestamp)
- 
-        participant_timestamps[f"{participant}-{session}"] = {
-            "Audio Timestamp": audio_first_timestamp,
-            "Visual Timestamp": visual_first_timestamp,
-            "Engagement Timestamp": engagement_first_timestamp,
-            "Audio_Visual_Difference": format_time_difference(audio_diff / 1000),
-            "Visual_Engagement_Difference": format_time_difference(visual_diff / 1000),
-        }
-
-    return participant_timestamps
-
 
 if __name__ == "__main__":
 
     engagement_df = pd.read_csv("./Raw_Engagement_Logs.csv")
     green_brightness_df = pd.read_csv("./Raw_Visual_Logs.csv")
     sound_pitch_df = pd.read_csv("./Raw_Audio_Logs.csv")
-
-    participant_timestamps = compare_first_timestamp_per_participant(
-        sound_pitch_df, green_brightness_df, engagement_df
-    )
-
-    for participant, timestamps in participant_timestamps.items():
-        print(f"Participant: {participant}")
-        print("First Timestamps and Differences:")
-        print(timestamps)
-        print()
         
     engagement_data_dict = separate_by_session_and_participant_engagement(engagement_df, True)
     sound_pitch_data_dict = separate_by_session_and_participant_engagement(sound_pitch_df)
